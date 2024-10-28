@@ -2,33 +2,26 @@ package AccountManagement;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-/**
- * CET - CS Academic Level 3
- * Declaration: I declare that this is my own original work and is free from Plagiarism
- * Student Name: Cailean Bernard
- * Student Number: 041143947
- * Section #: 300-301
- * Course: CST8130 - Data Structures
- * Professor: James Mwangi, Howard Rosenblum
- * Contents:
- * 
- */
+public class Account {
 
-public abstract class Account {
-	
 	protected String accountType = null;
 	protected float balance = 0.0f;
+	protected static int intAccountNum = 1;
 	protected String accountNum = null;
-	
+
 	public Account() {
-		
+
 	}
-	
+
+	public String generateAccountId() {
+		return String.format("%04d", intAccountNum++);
+	}
+
 	public void deposit (Scanner in) {
 		float amount = 0;
-		
+
 		while (true) {
-			
+
 			// prompt user
 			System.out.print("How much would you like to deposit? You may deposit dollars and cents.\n>$");
 			try {
@@ -39,7 +32,7 @@ public abstract class Account {
 				in.nextLine();
 				continue;
 			}
-			
+
 			if (!(amount <= 0)) {
 				System.out.printf("Deposited $%.2f into %s account.", amount, this.accountType);
 				updateBalance(amount, true);
@@ -48,7 +41,7 @@ public abstract class Account {
 				System.out.println("You entered a negative number. Enter a positive dollar amount.");
 				continue;
 			}
-			
+
 		}
 
 	}
@@ -68,7 +61,7 @@ public abstract class Account {
 	public void setAccountNum(String accountNum) {
 		this.accountNum = accountNum;
 	}
-	
+
 	public void updateBalance(float amount, boolean depositOrWithdraw) {
 		if (depositOrWithdraw) {
 			this.balance += amount;

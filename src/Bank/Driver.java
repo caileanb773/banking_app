@@ -6,34 +6,21 @@ import java.util.Scanner;
 import User.User;
 import java.awt.Toolkit;
 
-/**
- * CET - CS Academic Level 3
- * Declaration: I declare that this is my own original work and is free from Plagiarism
- * Student Name: Cailean Bernard
- * Student Number: 041143947
- * Section #: 300-301
- * Course: CST8130 - Data Structures
- * Professor: James Mwangi, Howard Rosenblum
- * Contents:
- * 
- */
-
 public class Driver {
 
 	static Map<String, User> userList = new HashMap<>();
-	static User usr = new User();
+	static User defaultUser = new User();
 	static Scanner input = new Scanner(System.in);
 
 	public static void main(String[] args) {
 
-		User currentUser = null;
+		User activeUser = null;
 		int menuChoice = 0;
-		int currentMenu = 1;
-		boolean isLoggedIn = false;
+		boolean isUser = false;
 		boolean isProgramRunning = true;
 
 		while (isProgramRunning) {
-			if (!isLoggedIn) {
+			if (!isUser) {
 				mainMenu();
 			} else {
 				userMenu();
@@ -41,63 +28,88 @@ public class Driver {
 
 			menuChoice = getMenuChoice(input);
 			switch (menuChoice) {
+
 			case 1:
-				if (!isLoggedIn) {
-					User newUser = usr.registerUser(input);
+				
+				// Admin mode: register new user
+				// User mode: deposit money
+				if (!isUser) {
+					User newUser = defaultUser.registerUser(input);
 					userList.put(newUser.getStrUserID(), newUser);
 				} else {
-					// Deposit money
+					activeUser.depositOrWithdraw(input, true);
 				}	
 				break;
+
 			case 2:
-				if (!isLoggedIn) {
-					usr.printUsers(userList);
+				
+				// Admin mode: display users
+				// User mode: withdraw money
+				if (!isUser) {
+					defaultUser.printUsers(userList);
 				} else {
-					// Withdraw Money
+					activeUser.depositOrWithdraw(input, false);
 				}
 				break;
+
 			case 3:
-				if (!isLoggedIn) {
-					User loggedInUser = usr.loginUser(input, userList);
-					if (loggedInUser != null) {
-						System.out.printf("Logging in %s...\n", loggedInUser.toString());
-						isLoggedIn = true;
+				// Admin mode: login as user
+				// User mode: create new account
+
+				// If there is no user logged in
+				if (!isUser) {
+					activeUser = defaultUser.loginUser(input, userList);
+					if (activeUser != null) {
+						System.out.printf("Logging in %s...\n", activeUser.toString());
+						isUser = true;
 					} else {
 						System.out.println("User could not be logged in.");
 					}
 				} 
 
-				// If there isn't a user logged in
+				// If there is a user logged in
 				else {
-					if (usr.registerNewAccount(input)) {
+					if (activeUser.registerNewAccount(input)) {
 						System.out.println("Account created successfully.");
 					} else {
 						System.out.println("Account could not be created.");
 					}
 				}
 				break;
+
 			case 4:
-				if (!isLoggedIn) {
+
+				// Admin mode: exit
+				// User mode: close account
+				if (!isUser) {
 					System.out.println("Exiting...");
 					input.close();
 					isProgramRunning = false;
 				} else {
-					// Close account
+					activeUser.deleteAccount(input);
 				}
 				break;
+
 			case 5:
-				// check balances
+
+				// Print accounts and balances
+				if (!isUser) {
+					System.out.println("Invalid menu selection.");
+				} else {
+					activeUser.checkAccountBalances();
+				}
 				break;
+
 			case 6:
-				if (!isLoggedIn) {
+				// Logout user
+				if (!isUser) {
 					System.out.println("Invalid menu selection.");
 				} else {
 					System.out.println("Logging out...");
-					isLoggedIn = false;
+					isUser = false;
 				}
 				break;
 			default:
-				System.out.println("That menu option doesn't exist.");
 				Toolkit.getDefaultToolkit().beep();
 				break;
 			}

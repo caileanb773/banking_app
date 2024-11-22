@@ -14,6 +14,7 @@ public class User {
 	private String strUserID = null;
 	private String password = null;
 	ArrayList<Account> accounts = new ArrayList<Account>();
+	private final float MAX_REALISTIC_AMOUNT = 3.08e11f;
 
 	public User() {
 
@@ -208,7 +209,7 @@ public class User {
 					// Set the account to the index retrieved
 					accountToUpdate = accounts.get(index);
 					currentAccountBalance = accountToUpdate.getBalance();
-					System.out.printf("Account verified. Current balance: $%.2f", currentAccountBalance);
+					System.out.printf("Account verified. Current balance: $%.2f\n", currentAccountBalance);
 
 					// Fetch the amount to update by from user
 					if (depositOrWithdraw) {
@@ -259,6 +260,11 @@ public class User {
 				System.out.println("Enter a dollar value greater than 0.");
 				continue;
 			}
+			
+			if (amount >= MAX_REALISTIC_AMOUNT) {
+				System.out.println("You are trying to deposit an unrealistic amount of money. Please try with a smaller amount.");
+				continue;
+			}
 
 			// Depositing logic
 			if (depositOrWithdraw) {
@@ -301,7 +307,7 @@ public class User {
 		System.out.println("The account has been removed.");
 		accounts.remove(index);
 	}
-
+	
 	public int checkIfAccountExists(String accountID) {
 		for (int i = 0; i < accounts.size(); i++) {
 			if (accounts.get(i).getAccountNum().equals(accountID)) {

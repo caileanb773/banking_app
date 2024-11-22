@@ -1,16 +1,15 @@
 package Bank;
 import java.util.HashMap;
 import java.util.InputMismatchException;
-import java.util.Map;
 import java.util.Scanner;
 import User.User;
 import java.awt.Toolkit;
 
 public class Driver {
 
-	static Map<String, User> userList = new HashMap<>();
 	static User defaultUser = new User();
 	static Scanner input = new Scanner(System.in);
+	
 
 	public static void main(String[] args) {
 
@@ -18,6 +17,7 @@ public class Driver {
 		int menuChoice = 0;
 		boolean isUser = false;
 		boolean isProgramRunning = true;
+		HashMap<String, User> userDB = UserDatabase.initUserDatabase();
 
 		while (isProgramRunning) {
 			if (!isUser) {
@@ -35,7 +35,9 @@ public class Driver {
 				// User mode: deposit money
 				if (!isUser) {
 					User newUser = defaultUser.registerUser(input);
-					userList.put(newUser.getStrUserID(), newUser);
+					
+					userDB.put(newUser.getStrUserID(), newUser);
+					
 				} else {
 					activeUser.depositOrWithdraw(input, true);
 				}	
@@ -46,7 +48,9 @@ public class Driver {
 				// Admin mode: display users
 				// User mode: withdraw money
 				if (!isUser) {
-					defaultUser.printUsers(userList);
+					
+					defaultUser.printUsers(userDB);
+					
 				} else {
 					activeUser.depositOrWithdraw(input, false);
 				}
@@ -58,7 +62,9 @@ public class Driver {
 
 				// If there is no user logged in
 				if (!isUser) {
-					activeUser = defaultUser.loginUser(input, userList);
+					
+					activeUser = defaultUser.loginUser(input, userDB);
+					
 					if (activeUser != null) {
 						System.out.printf("Logging in %s...\n", activeUser.toString());
 						isUser = true;

@@ -5,13 +5,22 @@ import User.User;
 
 public class UserDatabase {
 
-	private static final HashMap<String, User> userDatabase = new HashMap<String, User>();
+	private static UserDatabase instance;
+	
+	private HashMap<String, User> userDatabase;
 
 	private UserDatabase() {
-
+		userDatabase = new HashMap<>();
 	}
 
-	public static HashMap<String, User> initUserDatabase(){
+	public static synchronized UserDatabase getInstance() {
+		if (instance == null) {
+			instance = new UserDatabase();
+		}
+		return instance;
+	}
+	
+	public HashMap<String, User> getUserDatabase() {
 		return userDatabase;
 	}
 

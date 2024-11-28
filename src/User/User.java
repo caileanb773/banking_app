@@ -16,6 +16,7 @@ public class User {
 	private String name = null;
 	private final boolean WITHDRAW = false;
 	private final boolean DEPOSIT = true;
+	private final boolean NOT_FOUND = false;
 	private final float MAX_REALISTIC_AMOUNT = 3.08e11f;
 	private final int INVALID = -1;
 	private final int CHEQUING = 1;
@@ -120,57 +121,73 @@ public class User {
 		return newCust;
 	}
 
-	public User loginUser(Scanner in, Map<String, User> users) {
+	public User login(Scanner in, Map<String, User> users) {
 		String idToLogIn = null;
 		String userPass = null;
 		while (true) {
-			System.out.print("Enter the 4-digit ID of the user to log in as:\n> ");
-			idToLogIn = in.nextLine();
+			idToLogIn = inputUserID(in);
 
-			// Check that userID is not left blank
-			if (idToLogIn.trim().isEmpty()) {
-				System.out.println("Must enter an ID to log-in as a user. Try again");
-				continue;
-			} else {
+			if (checkIfUserExists(users, idToLogIn) == NOT_FOUND) {
+				return null;
+			}
+			User userToLogin = users.get(idToLogIn);
 
-				// Check that the user is registered in the database
-				if (checkIfUserExists(users, idToLogIn)) {
-					System.out.println("User exists in database.");
-					User userToLogIn = users.get(idToLogIn);
-
-					// Password validation
-					while (true) {
-						System.out.print("Enter password:\n> ");
-						userPass = in.nextLine();
-						if (!(userPass.trim().isEmpty())) {
-
-							// If the password equals the password of the user to log in
-							if (userPass.equals(userToLogIn.getPassword())) {
-								System.out.println("Password verified.");
-								return userToLogIn;
-							} else {
-								System.out.println("Password incorrect.");
-								return null;
-							}
-						}
-					}
-
-					// UserID not found in database, return
+			while (true) {
+				userPass = inputPassword(in);
+				if (verifyPassword(userPass, userToLogin) == true) {
+					return userToLogin;
 				} else {
-					System.out.println("A user with the provided ID was not found in the database.");
 					return null;
 				}
-
 			}
 		}
+	}
+	
+	private boolean verifyPassword(String attemptedPassword, User user) {
+		String passwordToMatch = user.getPassword();
+		if (attemptedPassword.equals(passwordToMatch)) {
+			System.out.println("Password verified.");
+			return true;
+		} else {
+			System.out.println("Incorrect password.");
+			return false;
+		}
+	}
+
+	private String inputPassword(Scanner in) {
+		System.out.print("Enter password:\n> ");
+		String userPass = in.nextLine();
+		if (userPass.trim().isEmpty()) {
+			System.out.println("Field left blank. Returning...");
+			return null;
+		}
+		return userPass;
+	}
+
+	public String inputUserID(Scanner in) {
+		String id = null;
+
+		while (true) {
+			System.out.print("Enter the 4-digit ID of the user to log in as:\n> ");
+			id = in.nextLine();
+
+			if (id.trim().isEmpty()) {
+				System.out.println("Must enter an ID to log-in as a user. Try again");
+				continue;
+			}
+			break;
+		}
+		return id;
 	}
 
 	public boolean checkIfUserExists(Map<String, User> userMap, String idToFind) {
 		for (Map.Entry<String, User> entry : userMap.entrySet()) {
 			if (entry.getKey().equals(idToFind)) {
+				System.out.println("User exists in database.");
 				return true;
 			}
 		}
+		System.out.println("A user with the provided ID was not found in the database.");
 		return false;
 	}
 

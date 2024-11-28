@@ -8,7 +8,8 @@ public class Driver {
 
 	public static void main(String[] args) {
 
-		HashMap<String, User> userDB = UserDatabase.initUserDatabase();
+		UserDatabase database = UserDatabase.getInstance();
+		HashMap<String, User> userList = database.getUserDatabase();
 		Scanner userInput = new Scanner(System.in);
 		User defaultUser = new User();
 		User activeUser = null;
@@ -42,7 +43,7 @@ public class Driver {
 			case OPTION_1:
 				if (isAdmin) {
 					User newUser = defaultUser.registerUser(userInput);
-					userDB.put(newUser.getStrUserID(), newUser);
+					userList.put(newUser.getStrUserID(), newUser);
 				} else {
 					activeUser.deposit(userInput);
 				}	
@@ -52,7 +53,7 @@ public class Driver {
 
 			case OPTION_2:
 				if (isAdmin) {
-					defaultUser.printUsers(userDB);
+					defaultUser.printUsers(userList);
 				} else {
 					activeUser.withdraw(userInput);
 				}
@@ -62,7 +63,7 @@ public class Driver {
 
 			case OPTION_3:
 				if (isAdmin) {
-					activeUser = defaultUser.loginUser(userInput, userDB);
+					activeUser = defaultUser.login(userInput, userList);
 					if (activeUser != null) {
 						System.out.printf("Logging in %s...\n", activeUser.toString());
 						isAdmin = false;
@@ -71,9 +72,9 @@ public class Driver {
 					}
 				} 
 				else {
-					System.out.println("What kind of account would you like to create?\n"
+					System.out.printf("What kind of account would you like to create?\n"
 							+ "For chequing, press 1. For saving, press 2.\n"
-							+ "Press 3 to return.\n>");
+							+ "Press 3 to return.\n> ");
 					if (activeUser.registerNewAccount(userInput)) {
 						System.out.println("Account created successfully.");
 					} else {

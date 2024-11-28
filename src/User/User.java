@@ -1,20 +1,28 @@
 package User;
+
 import java.util.ArrayList;
-import java.util.InputMismatchException;
 import java.util.Map;
 import java.util.Scanner;
 import AccountManagement.Account;
 import AccountManagement.Chequing;
 import AccountManagement.Saving;
+import Bank.Utility;
 
 public class User {
 
-	private String name = null;
-	private int intUserID = 0;
+	ArrayList<Account> accounts = new ArrayList<Account>();
 	private String strUserID = null;
 	private String password = null;
-	ArrayList<Account> accounts = new ArrayList<Account>();
+	private String name = null;
+	private final boolean WITHDRAW = false;
+	private final boolean DEPOSIT = true;
 	private final float MAX_REALISTIC_AMOUNT = 3.08e11f;
+	private final int INVALID = -1;
+	private final int CHEQUING = 1;
+	private final int SAVINGS = 2;
+	private final int EMPTY = 0;
+	private final int EXIT = 3;
+	private int intUserID = 0;
 
 	public User() {
 
@@ -40,37 +48,33 @@ public class User {
 	public Account createAccount(Scanner in) {
 		int accountChoice = 0;
 		Account newAccount = new Account();
+		String accountNum = null;
 
 		// Ask user which account would they would like to create
 		while (true) {
-			System.out.print("What kind of account would you like to create?\n"
-					+ "For chequing, press 1. For saving, press 2.\n> ");
-			try {
-				accountChoice = in.nextInt();
-				in.nextLine();
-			} catch (InputMismatchException e) {
-				System.out.println("An integer was not detected, try again.");
-				in.nextLine();
-				continue;
-			}
-			if (accountChoice == 1) {
-				String accountNum = newAccount.generateAccountId();
+			accountChoice = Utility.userIntInput(in);
+			switch (accountChoice) {
+			case CHEQUING:
+				accountNum = newAccount.generateAccountId();
 				newAccount = new Chequing(accountNum, 0.0f, "Chequing");
 				return newAccount;
-			} else if (accountChoice == 2) {
-				String accountNum = newAccount.generateAccountId();
+			case SAVINGS:
+				accountNum = newAccount.generateAccountId();
 				newAccount = new Saving(accountNum, 0.0f, "Saving");
 				return newAccount;
-			} else {
-				System.out.println("The only valid menu options are 1 or 2.");
-				continue;
+			case EXIT:
+				System.out.println("Returning...");
+				return null;
+			default:
+				System.out.println("Invalid option; please choose 1 for chequing, 2 for savings, or 3 to return.");
+				break;
 			}
 		}
 	}
 
 	public void checkAccountBalances() {
 		System.out.println("--- Account Information ---");
-		if (accounts.size() != 0) {
+		if (accounts.size() != EMPTY) {
 			for (Account acc : accounts) {
 				System.out.println(acc + "\n");
 			}
@@ -170,67 +174,34 @@ public class User {
 		return false;
 	}
 
-	public void depositOrWithdraw(Scanner in, boolean depositOrWithdraw) {
+	public void deposit(Scanner in) {
 		Account accountToUpdate = null;
 		String accountID = null;
 		int index = 0;
 		float amount = 0.0f;
-		String fundsAdjust = null;
 		float currentAccountBalance = 0.0f;
-
-		if (depositOrWithdraw) {
-			fundsAdjust = "deposit to";
-		} else {
-			fundsAdjust = "withdraw from";
-		}
 
 		if (accounts.size() == 0) {
 			System.out.println("User has no active accounts.");
 			return;
 		}
-
-		// Get account ID from user
 		while (true) {
-			System.out.printf("What is the account number that you would like to %s?\n> ", fundsAdjust);
+			System.out.printf("What is the account number that you would like to deposit to?\n> ");
 			accountID = in.nextLine();
-
-			// Check that accountID is not blank
 			if (accountID.trim().isEmpty()) {
 				System.out.println("You left the account ID field blank. Returning...");
 				return;
 
 			} else {
-
-				// Check that the account exists in user
 				index = checkIfAccountExists(accountID);
 
-				// If the account exists (is not == -1)
+				// checkifAccountExists returns -1 if account not found
 				if (index != -1) {
-					// Set the account to the index retrieved
 					accountToUpdate = accounts.get(index);
 					currentAccountBalance = accountToUpdate.getBalance();
 					System.out.printf("Account verified. Current balance: $%.2f\n", currentAccountBalance);
-
-					// Fetch the amount to update by from user
-					if (depositOrWithdraw) {
-						amount = getAmountToUpdate(in, true, 0.0f);
-					} else {
-						if (currentAccountBalance == 0) {
-							System.out.println("Account balance is $0, nothing to withdraw.\nReturning to menu...");
-							return;
-						} else {
-							amount = getAmountToUpdate(in, false, currentAccountBalance);
-						}
-					}
-
-					// Update the balance in the account
-					if (depositOrWithdraw) {
-						accountToUpdate.updateBalance(amount, true);
-					} else {
-						accountToUpdate.updateBalance(amount, false);
-					}
-
-					// Final confirmation to user
+					amount = getDepositAmt(in, 0.0f);
+					accountToUpdate.updateBalance(amount, DEPOSIT);
 					System.out.println("Transaction successful.");
 					return;
 				} else {
@@ -241,52 +212,111 @@ public class User {
 		}
 	}
 
-	public float getAmountToUpdate(Scanner in, boolean depositOrWithdraw, float currentBal) {
+	public void withdraw(Scanner in) {
+		Account accountToUpdate = null;
+		String accountID = null;
+		int index = 0;
+		float amount = 0.0f;
+		float currentAccountBalance = 0.0f;
+
+		if (accounts.size() == 0) {
+			System.out.println("User has no active accounts.");
+			return;
+		}
+
+		// Get account ID from user
+		while (true) {
+			System.out.printf("What is the account number that you would like to withdraw from?\n> ");
+			accountID = in.nextLine();
+
+			// Check that accountID is not blank
+			if (accountID.trim().isEmpty()) {
+				System.out.println("You left the account ID field blank. Returning...");
+				return;
+
+			} else {
+				index = checkIfAccountExists(accountID);
+
+				if (index != INVALID) {
+					accountToUpdate = accounts.get(index);
+					currentAccountBalance = accountToUpdate.getBalance();
+					System.out.printf("Account verified. Current balance: $%.2f\n", currentAccountBalance);
+
+					if (currentAccountBalance == 0) {
+						System.out.println("Account balance is $0, nothing to withdraw.\nReturning to menu...");
+						return;
+					} else {
+						amount = getWithdrawAmt(in, currentAccountBalance);
+					}
+					accountToUpdate.updateBalance(amount, WITHDRAW);
+					System.out.println("Transaction successful.");
+					return;
+				} else {
+					System.out.println("Account was not found.");
+					return;
+				}
+			}
+		}
+	}
+
+	public float getDepositAmt(Scanner in, float currentBal) {
 		float amount = 0.0f;
 
 		while (true) {
 			System.out.print("Enter a dollar value:\n> ");
-			try {
-				amount = in.nextFloat();
-				in.nextLine();
-			} catch (InputMismatchException e) {
-				System.out.println("You did not enter a dollar amount.");
-				in.nextLine();
-				continue;
-			}
+			amount = Utility.userFloatInput(in);
 
 			// Handle if the user enters 0
 			if (amount <= 0) {
 				System.out.println("Enter a dollar value greater than 0.");
 				continue;
 			}
-			
+
 			if (amount >= MAX_REALISTIC_AMOUNT) {
 				System.out.println("You are trying to deposit an unrealistic amount of money. Please try with a smaller amount.");
 				continue;
 			}
 
-			// Depositing logic
-			if (depositOrWithdraw) {
-				System.out.printf("Depositing $%.2f...\n", amount);
-				return amount;
-			} else {
+			System.out.printf("Depositing $%.2f...\n", amount);
+			return amount;
+		}
+	}
 
-				// Withdrawal logic
-				if ((currentBal - amount) < 0) {
-					System.out.println("Withdrawing that amount would put account in negative balance.");
-					continue;
-				} else {
-					System.out.printf("Withdrawing %.2f...\n", amount);
-					return amount;
-				}
+	public float getWithdrawAmt(Scanner in, float currentBal) {
+		float amount = 0.0f;
+
+		while (true) {
+			System.out.print("Enter a dollar value:\n> ");
+			amount = Utility.userFloatInput(in);
+
+			if (amount <= 0) {
+				System.out.println("Enter a dollar value greater than 0.");
+				continue;
+			}
+
+			if (amount >= MAX_REALISTIC_AMOUNT) {
+				System.out.println("You are trying to deposit an unrealistic amount of money. Please try with a smaller amount.");
+				continue;
+			}
+
+			if ((currentBal - amount) < EMPTY) {
+				System.out.println("Withdrawing that amount would put account in negative balance.");
+				continue;
+			} else {
+				System.out.printf("Withdrawing %.2f...\n", amount);
+				return amount;
 			}
 		}
 	}
 
-	public void deleteAccount(Scanner in) {
+	public boolean deleteAccount(Scanner in) {
 		String accNum = null;
 		int index = 0;
+
+		if (accounts.size() == EMPTY) {
+			System.out.println("User has no active accounts.");
+			return false;
+		}
 
 		while (true) {
 			System.out.print("Enter the number for the account you would like to delete:\n> ");
@@ -296,25 +326,38 @@ public class User {
 				break;
 			} else {
 				System.out.println("The ID to search field was left blank.\nReturning...");
-				return;
+				return false;
 			}
 		}
-		
-		if (index == -1) {
+
+		if (index == INVALID) {
 			System.out.println("The account with that ID was not found.\nReturning...");
-			return;
+			return false;
 		}
-		System.out.println("The account has been removed.");
+
+		if (isAccountEmpty(index) == false) {
+			System.out.println("Cannot remove an account carrying a balance, withdraw all funds first.");
+			return false;
+		}
 		accounts.remove(index);
+		return true;
 	}
-	
+
+	public boolean isAccountEmpty(int accountIndex) {
+		Account acc = accounts.get(accountIndex);
+		if (acc.getBalance() == 0.0f) {
+			return true;
+		}
+		return false;
+	}
+
 	public int checkIfAccountExists(String accountID) {
 		for (int i = 0; i < accounts.size(); i++) {
 			if (accounts.get(i).getAccountNum().equals(accountID)) {
 				return i;
 			}
 		}
-		return -1;
+		return INVALID;
 	}
 
 	public void printUsers(Map<String, User> users) {

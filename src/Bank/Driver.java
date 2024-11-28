@@ -1,81 +1,80 @@
 package Bank;
+
 import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.Scanner;
 import User.User;
-import java.awt.Toolkit;
 
 public class Driver {
 
-	static User defaultUser = new User();
-	static Scanner input = new Scanner(System.in);
-	
-
 	public static void main(String[] args) {
 
-		User activeUser = null;
-		int menuChoice = 0;
-		boolean isUser = false;
-		boolean isProgramRunning = true;
 		HashMap<String, User> userDB = UserDatabase.initUserDatabase();
+		Scanner userInput = new Scanner(System.in);
+		User defaultUser = new User();
+		User activeUser = null;
+		Menu menu = new Menu();
+		boolean isRunning = true;
+		boolean isAdmin = true;
+		final int OPTION_1 = 1;
+		final int OPTION_2 = 2;
+		final int OPTION_3 = 3;
+		final int OPTION_4 = 4;
+		final int OPTION_5 = 5;
+		final int OPTION_6 = 6;
+		final int ADMIN = 1;
+		final int USER = 0;
+		int menuChoice = 0;
 
-		while (isProgramRunning) {
-			if (!isUser) {
-				mainMenu();
+		/* ===== Program loop ===== */
+		while (isRunning) {
+			if (isAdmin) {
+				menu.setMenu(ADMIN);
 			} else {
-				userMenu();
+				menu.setMenu(USER);
 			}
+			menu.displayMenu();
+			menuChoice = Utility.userIntInput(userInput);
 
-			menuChoice = getMenuChoice(input);
 			switch (menuChoice) {
 
-			case 1:
-				
-				// Admin mode: register new user
-				// User mode: deposit money
-				if (!isUser) {
-					User newUser = defaultUser.registerUser(input);
-					
+			/* ===== Admin: Register user =====//===== User: Deposit ===== */
+
+			case OPTION_1:
+				if (isAdmin) {
+					User newUser = defaultUser.registerUser(userInput);
 					userDB.put(newUser.getStrUserID(), newUser);
-					
 				} else {
-					activeUser.depositOrWithdraw(input, true);
+					activeUser.deposit(userInput);
 				}	
 				break;
 
-			case 2:
-				
-				// Admin mode: display users
-				// User mode: withdraw money
-				if (!isUser) {
-					
+				/* ===== Admin: Print users =====//===== User: Withdraw ===== */
+
+			case OPTION_2:
+				if (isAdmin) {
 					defaultUser.printUsers(userDB);
-					
 				} else {
-					activeUser.depositOrWithdraw(input, false);
+					activeUser.withdraw(userInput);
 				}
 				break;
 
-			case 3:
-				// Admin mode: login as user
-				// User mode: create new account
+				/* ===== Admin: Login as user =====//===== User: Create account ===== */
 
-				// If there is no user logged in
-				if (!isUser) {
-					
-					activeUser = defaultUser.loginUser(input, userDB);
-					
+			case OPTION_3:
+				if (isAdmin) {
+					activeUser = defaultUser.loginUser(userInput, userDB);
 					if (activeUser != null) {
 						System.out.printf("Logging in %s...\n", activeUser.toString());
-						isUser = true;
+						isAdmin = false;
 					} else {
 						System.out.println("User could not be logged in.");
 					}
 				} 
-
-				// If there is a user logged in
 				else {
-					if (activeUser.registerNewAccount(input)) {
+					System.out.println("What kind of account would you like to create?\n"
+							+ "For chequing, press 1. For saving, press 2.\n"
+							+ "Press 3 to return.\n>");
+					if (activeUser.registerNewAccount(userInput)) {
 						System.out.println("Account created successfully.");
 					} else {
 						System.out.println("Account could not be created.");
@@ -83,75 +82,49 @@ public class Driver {
 				}
 				break;
 
-			case 4:
+				/* ===== Admin: Exit program =====//===== User: Remove account ===== */
 
-				// Admin mode: exit
-				// User mode: close account
-				if (!isUser) {
+			case OPTION_4:
+				if (isAdmin) {
 					System.out.println("Exiting...");
-					input.close();
-					isProgramRunning = false;
+					userInput.close();
+					isRunning = false;
 				} else {
-					activeUser.deleteAccount(input);
+					if (activeUser.deleteAccount(userInput) == true) {
+						System.out.println("The account has been removed.");
+					} else {
+
+					}
 				}
 				break;
 
-			case 5:
+				/* ===== Admin: N/A =====//===== User: Check balances ===== */
 
-				// Print accounts and balances
-				if (!isUser) {
+			case OPTION_5:
+				if (isAdmin) {
 					System.out.println("Invalid menu selection.");
 				} else {
 					activeUser.checkAccountBalances();
 				}
 				break;
 
-			case 6:
-				// Logout user
-				if (!isUser) {
+				/* ===== Admin: N/A =====//===== User: Log out ===== */
+
+			case OPTION_6:
+				if (isAdmin) {
 					System.out.println("Invalid menu selection.");
 				} else {
 					System.out.println("Logging out...");
-					isUser = false;
+					isAdmin = true;
 				}
 				break;
+
 			default:
-				Toolkit.getDefaultToolkit().beep();
+				System.out.println("Invalid menu selection.");
 				break;
 			}
 		}
 
-		// End of main
-	}
+	}	// End of main
 
-	public static void mainMenu() {
-		System.out.print("--- Main Menu ---\n"
-				+ "1. Register new user\n"
-				+ "2. User list\n"
-				+ "3. Log-in existing user\n"
-				+ "4. Exit\n> ");
-	}
-
-	public static void userMenu() {
-		System.out.print("--- User Features ---\n"
-				+ "1. Deposit money\n"
-				+ "2. Withdraw money\n"
-				+ "3. Open new account\n"
-				+ "4. Close account\n"
-				+ "5. Check balances\n"
-				+ "6. Logout\n> ");
-	}
-
-	public static int getMenuChoice(Scanner in) {
-		int menuChoice = 0;
-		try {
-			menuChoice = in.nextInt();
-			in.nextLine();
-		} catch (InputMismatchException e) {
-			System.out.println("Numerical characters only.");
-			in.nextLine();
-		}
-		return menuChoice;
-	}
-
-}
+}	// End of class

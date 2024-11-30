@@ -1,12 +1,14 @@
-package User;
+package user;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
-import AccountManagement.Account;
-import AccountManagement.Chequing;
-import AccountManagement.Saving;
-import Bank.Utility;
+
+import accountmanagement.Account;
+import accountmanagement.Chequing;
+import accountmanagement.Saving;
+import bank.Utility;
 
 public class User {
 
@@ -17,7 +19,7 @@ public class User {
 	private final boolean WITHDRAW = false;
 	private final boolean DEPOSIT = true;
 	private final boolean NOT_FOUND = false;
-	private final float MAX_REALISTIC_AMOUNT = 3.08e11f;
+	private final BigDecimal MAX_REALISTIC_AMOUNT = new BigDecimal(1000000000000.00);
 	private final int INVALID = -1;
 	private final int CHEQUING = 1;
 	private final int SAVINGS = 2;
@@ -38,7 +40,7 @@ public class User {
 	public boolean registerNewAccount(Scanner in) {
 		Account accToAdd = createAccount(in);
 		if (accToAdd != null) {
-			System.out.println("Account with ID [" + accToAdd.getAccountNum() + "] created.");
+			System.out.println("Creating account with ID [" + accToAdd.getAccountNum() + "] ...");
 			addAccount(accToAdd);
 			return true;
 		} else {
@@ -57,11 +59,11 @@ public class User {
 			switch (accountChoice) {
 			case CHEQUING:
 				accountNum = newAccount.generateAccountId();
-				newAccount = new Chequing(accountNum, 0.0f, "Chequing");
+				newAccount = new Chequing(accountNum, BigDecimal.ZERO, "Chequing");
 				return newAccount;
 			case SAVINGS:
 				accountNum = newAccount.generateAccountId();
-				newAccount = new Saving(accountNum, 0.0f, "Saving");
+				newAccount = new Saving(accountNum, BigDecimal.ZERO, "Saving");
 				return newAccount;
 			case EXIT:
 				System.out.println("Returning...");
@@ -195,8 +197,8 @@ public class User {
 		Account accountToUpdate = null;
 		String accountID = null;
 		int index = 0;
-		float amount = 0.0f;
-		float currentAccountBalance = 0.0f;
+		BigDecimal amount = BigDecimal.ZERO;
+		BigDecimal currentAccountBalance = BigDecimal.ZERO;
 
 		if (accounts.size() == 0) {
 			System.out.println("User has no active accounts.");
@@ -217,7 +219,7 @@ public class User {
 					accountToUpdate = accounts.get(index);
 					currentAccountBalance = accountToUpdate.getBalance();
 					System.out.printf("Account verified. Current balance: $%.2f\n", currentAccountBalance);
-					amount = getDepositAmt(in, 0.0f);
+					amount = getDepositAmt(in);
 					accountToUpdate.updateBalance(amount, DEPOSIT);
 					System.out.println("Transaction successful.");
 					return;
@@ -233,8 +235,8 @@ public class User {
 		Account accountToUpdate = null;
 		String accountID = null;
 		int index = 0;
-		float amount = 0.0f;
-		float currentAccountBalance = 0.0f;
+		BigDecimal amount = BigDecimal.ZERO;
+		BigDecimal currentAccountBalance = BigDecimal.ZERO;
 
 		if (accounts.size() == 0) {
 			System.out.println("User has no active accounts.");
@@ -259,7 +261,7 @@ public class User {
 					currentAccountBalance = accountToUpdate.getBalance();
 					System.out.printf("Account verified. Current balance: $%.2f\n", currentAccountBalance);
 
-					if (currentAccountBalance == 0) {
+					if (currentAccountBalance.compareTo(BigDecimal.ZERO) == 0) {
 						System.out.println("Account balance is $0, nothing to withdraw.\nReturning to menu...");
 						return;
 					} else {
@@ -276,53 +278,53 @@ public class User {
 		}
 	}
 
-	public float getDepositAmt(Scanner in, float currentBal) {
-		float amount = 0.0f;
+	public BigDecimal getDepositAmt(Scanner in) {
+		BigDecimal amount = BigDecimal.ZERO;
 
 		while (true) {
-			System.out.print("Enter a dollar value:\n> ");
-			amount = Utility.userFloatInput(in);
+			amount = Utility.userAmountInput(in);
 
 			// Handle if the user enters 0
-			if (amount <= 0) {
-				System.out.println("Enter a dollar value greater than 0.");
+			if (amount.compareTo(BigDecimal.ZERO) == 0) {
+				System.out.println("Deposit must be greater than zero dollars.");
 				continue;
 			}
 
-			if (amount >= MAX_REALISTIC_AMOUNT) {
+			if (amount.compareTo(MAX_REALISTIC_AMOUNT) == 1) {
 				System.out.println("You are trying to deposit an unrealistic amount of money. Please try with a smaller amount.");
 				continue;
 			}
-
+			
 			System.out.printf("Depositing $%.2f...\n", amount);
 			return amount;
 		}
 	}
 
-	public float getWithdrawAmt(Scanner in, float currentBal) {
-		float amount = 0.0f;
+	public BigDecimal getWithdrawAmt(Scanner in, BigDecimal currentBal) {
+		BigDecimal amount = BigDecimal.ZERO;
 
 		while (true) {
 			System.out.print("Enter a dollar value:\n> ");
-			amount = Utility.userFloatInput(in);
+			amount = Utility.userAmountInput(in);
 
-			if (amount <= 0) {
+			if (amount.compareTo(BigDecimal.ZERO) == -1) {
 				System.out.println("Enter a dollar value greater than 0.");
 				continue;
 			}
 
-			if (amount >= MAX_REALISTIC_AMOUNT) {
+			if (amount.compareTo(MAX_REALISTIC_AMOUNT) == 1) {
 				System.out.println("You are trying to deposit an unrealistic amount of money. Please try with a smaller amount.");
 				continue;
 			}
 
-			if ((currentBal - amount) < EMPTY) {
+			if ((currentBal.subtract(amount)).compareTo(BigDecimal.ZERO) == -1) {
 				System.out.println("Withdrawing that amount would put account in negative balance.");
 				continue;
-			} else {
-				System.out.printf("Withdrawing %.2f...\n", amount);
-				return amount;
 			}
+						
+			System.out.printf("Withdrawing %.2f...\n", amount);
+			return amount;
+			
 		}
 	}
 
@@ -362,10 +364,8 @@ public class User {
 
 	public boolean isAccountEmpty(int accountIndex) {
 		Account acc = accounts.get(accountIndex);
-		if (acc.getBalance() == 0.0f) {
-			return true;
-		}
-		return false;
+		return acc.getBalance().compareTo(BigDecimal.ZERO) == 0;
+	
 	}
 
 	public int checkIfAccountExists(String accountID) {

@@ -1,8 +1,9 @@
-package Bank;
+package bank;
 
 import java.util.HashMap;
 import java.util.Scanner;
-import User.User;
+
+import user.User;
 
 public class Driver {
 

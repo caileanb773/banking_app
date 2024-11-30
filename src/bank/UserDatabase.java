@@ -1,7 +1,8 @@
-package Bank;
+package bank;
 
 import java.util.HashMap;
-import User.User;
+
+import user.User;
 
 public class UserDatabase {
 

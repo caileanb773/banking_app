@@ -1,15 +1,17 @@
-package AccountManagement;
+package accountmanagement;
 
-public class Saving extends Account{
+import java.math.BigDecimal;
 
-	public Saving() {
+public class Chequing extends Account{
+
+	public Chequing() {
 		super();
 	}
 
-	public Saving(String accNum, float bal, String accType) {
+	public Chequing(String accNum, BigDecimal bal, String accType) {
 		this.accountNum = accNum;
 		this.balance = bal;
-		this.accountType = "Saving";
+		this.accountType = "Chequing";
 	}
 
 	@Override
